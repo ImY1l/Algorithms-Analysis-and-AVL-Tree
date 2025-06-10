@@ -25,7 +25,7 @@ This project implements and analyzes sorting and searching algorithms as part of
 ## 🔢 Dataset
 - Input datasets are CSV files with two fields per row: a unique 32-bit positive integer and a string.
 - The dataset generator creates randomized datasets with unique integers up to at least 1 billion.
-- Sample dataset provided: `dataset_sample_1000.csv`
+- Sample dataset provided: [dataset_sample_1000.csv](./dataset_sample_1000.csv)
 - Dataset size for experiments should be large enough to show a runtime difference of at least 60 seconds between sorting algorithms.
 
 ## 📋 Implementation Details
