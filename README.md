@@ -8,16 +8,16 @@ This project implements and analyzes sorting and searching algorithms as part of
 - Discussion on array-based AVL tree implementation vs linked structure
 
 ## 📁 Project Structure
-| Algorithm                 | File Name Pattern                 | Description                        |
-|---------------------------|---------------------------------|----------------------------------|
-| Dataset Generator         | `dataset_generator`              | Generates randomized unique datasets (integer, string pairs) |
-| Merge Sort (stepwise)     | `merge_sort_step`                | Outputs sorting steps for a specified range of rows |
-| Quick Sort (stepwise)     | `quick_sort_step`                | Outputs sorting steps for a specified range of rows |
-| Merge Sort (full)         | `merge_sort`                    | Sorts entire dataset and outputs sorted file and running time |
-| Quick Sort (full)         | `quick_sort`                    | Sorts entire dataset and outputs sorted file and running time |
-| Binary Search (stepwise)  | `binary_search_step`             | Outputs search path for a target element |
-| Binary Search (full)      | `binary_search`                  | Measures running time for best, average, worst cases over multiple searches |
 
+| Component                 | File Name Pattern             | Purpose                                                                 |
+|--------------------------|-------------------------------|-------------------------------------------------------------------------|
+| Dataset (Pre-generated)  | `dataset_*.csv`               | Contains randomized datasets used for sorting and searching algorithms |
+| Merge Sort (Stepwise)    | `merge_sort_step`             | Performs and logs step-by-step merge sort on a specified row range     |
+| Quick Sort (Stepwise)    | `quick_sort_step`             | Performs and logs step-by-step quick sort on a specified row range     |
+| Merge Sort (Full)        | `merge_sort`                  | Executes full merge sort on large dataset; outputs sorted file and time|
+| Quick Sort (Full)        | `quick_sort`                  | Executes full quick sort on large dataset; outputs sorted file and time|
+| Binary Search (Stepwise) | `binary_search_step`          | Traces the search path for a specific element within a sorted dataset  |
+| Binary Search (Full)     | `binary_search`               | Runs binary search multiple times to measure best, average, and worst case runtimes |
 
 ## 💻 Tech Stack
 ![Java](https://img.shields.io/badge/java-%23ED8B00.svg?style=for-the-badge&logo=openjdk&logoColor=white) ![Python](https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54)
