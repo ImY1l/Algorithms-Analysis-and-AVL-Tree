@@ -42,5 +42,8 @@ if __name__ == "__main__":
     data.sort(key=lambda x: x[0])  # ensure the data is sorted by number
 
     steps = binary_search_step(data, target)
+    
+output_filename = f"binary_search_step_{target}.txt"
+with open(output_filename, "w") as f:
     for step in steps:
-        print(step)
+        f.write(step + "\n")
