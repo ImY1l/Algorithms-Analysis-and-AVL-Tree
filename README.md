@@ -29,7 +29,7 @@ This project implements and analyzes sorting and searching algorithms as part of
 - Dataset size for experiments should be large enough to show a runtime difference of at least 60 seconds between sorting algorithms.
 
 ## 📋 Implementation Details
-- Algorithms are implemented in **two programming languages** chosen by the group (e.g., Java, Python, C++).
+- Algorithms are implemented in **two programming languages** chosen by the group (Java, Python).
 - No use of built-in sorting/searching libraries or data structures that perform internal sorting (e.g., TreeSet, TreeMap, PriorityQueue).
 - Only arrays and lists (array lists or linked lists) are allowed as data structures.
 - Running time measurements exclude I/O time.
