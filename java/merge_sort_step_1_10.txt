@@ -1,0 +1,47 @@
+=== MERGE SORT ALGORITHM ANALYSIS ===
+Input File: dataset_sample_100000.csv
+Processing Range: Row 1 to Row 10
+Total Elements: 10
+Algorithm: Divide-and-Conquer Merge Sort
+Time Complexity: O(n log n)
+Space Complexity: O(n)
+
+Step 1: Initial Configuration
+Array: [1076478876/kqsqf, 1900230750/mtdwt, 355051578/vdimc, 984728748/jxiux, 718258983/vbdpv, 1450683975/kqplc, 1676682953/jyolb, 1436043864/jsjfl, 1570383214/qfyfq, 1120095144/qyccq]
+
+--- SORTING PROCESS BEGINS ---
+
+Step 2: Merge Complete (Range: 0 to 1)
+Array: [1076478876/kqsqf, 1900230750/mtdwt, 355051578/vdimc, 984728748/jxiux, 718258983/vbdpv, 1450683975/kqplc, 1676682953/jyolb, 1436043864/jsjfl, 1570383214/qfyfq, 1120095144/qyccq]
+
+Step 3: Merge Complete (Range: 0 to 2)
+Array: [355051578/vdimc, 1076478876/kqsqf, 1900230750/mtdwt, 984728748/jxiux, 718258983/vbdpv, 1450683975/kqplc, 1676682953/jyolb, 1436043864/jsjfl, 1570383214/qfyfq, 1120095144/qyccq]
+
+Step 4: Merge Complete (Range: 3 to 4)
+Array: [355051578/vdimc, 1076478876/kqsqf, 1900230750/mtdwt, 718258983/vbdpv, 984728748/jxiux, 1450683975/kqplc, 1676682953/jyolb, 1436043864/jsjfl, 1570383214/qfyfq, 1120095144/qyccq]
+
+Step 5: Merge Complete (Range: 0 to 4)
+Array: [355051578/vdimc, 718258983/vbdpv, 984728748/jxiux, 1076478876/kqsqf, 1900230750/mtdwt, 1450683975/kqplc, 1676682953/jyolb, 1436043864/jsjfl, 1570383214/qfyfq, 1120095144/qyccq]
+
+Step 6: Merge Complete (Range: 5 to 6)
+Array: [355051578/vdimc, 718258983/vbdpv, 984728748/jxiux, 1076478876/kqsqf, 1900230750/mtdwt, 1450683975/kqplc, 1676682953/jyolb, 1436043864/jsjfl, 1570383214/qfyfq, 1120095144/qyccq]
+
+Step 7: Merge Complete (Range: 5 to 7)
+Array: [355051578/vdimc, 718258983/vbdpv, 984728748/jxiux, 1076478876/kqsqf, 1900230750/mtdwt, 1436043864/jsjfl, 1450683975/kqplc, 1676682953/jyolb, 1570383214/qfyfq, 1120095144/qyccq]
+
+Step 8: Merge Complete (Range: 8 to 9)
+Array: [355051578/vdimc, 718258983/vbdpv, 984728748/jxiux, 1076478876/kqsqf, 1900230750/mtdwt, 1436043864/jsjfl, 1450683975/kqplc, 1676682953/jyolb, 1120095144/qyccq, 1570383214/qfyfq]
+
+Step 9: Merge Complete (Range: 5 to 9)
+Array: [355051578/vdimc, 718258983/vbdpv, 984728748/jxiux, 1076478876/kqsqf, 1900230750/mtdwt, 1120095144/qyccq, 1436043864/jsjfl, 1450683975/kqplc, 1570383214/qfyfq, 1676682953/jyolb]
+
+Step 10: Merge Complete (Range: 0 to 9)
+Array: [355051578/vdimc, 718258983/vbdpv, 984728748/jxiux, 1076478876/kqsqf, 1120095144/qyccq, 1436043864/jsjfl, 1450683975/kqplc, 1570383214/qfyfq, 1676682953/jyolb, 1900230750/mtdwt]
+
+--- SORTING PROCESS COMPLETE ---
+
+FINAL RESULT:
+Sorted Array: [355051578/vdimc, 718258983/vbdpv, 984728748/jxiux, 1076478876/kqsqf, 1120095144/qyccq, 1436043864/jsjfl, 1450683975/kqplc, 1570383214/qfyfq, 1676682953/jyolb, 1900230750/mtdwt]
+
+Total Steps Executed: 10
+Merge sort completed in 0.895458 ms
