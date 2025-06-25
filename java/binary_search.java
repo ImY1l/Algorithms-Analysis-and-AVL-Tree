@@ -20,6 +20,12 @@ public class binary_search{
 
             while ((line = reader.readLine()) != null)
             {
+                line = line.trim();
+
+                if (line.isEmpty()) { 
+                    continue;
+                }
+
                 String[] parts = line.split(",", 2);
                 if (parts.length >= 1)
                 {
@@ -82,6 +88,8 @@ public class binary_search{
         } catch (IOException e) {
             System.out.println("Error writing output file.");
         }
+
+        System.out.println("File saved to ");
     }
 
     // Binary search implementation

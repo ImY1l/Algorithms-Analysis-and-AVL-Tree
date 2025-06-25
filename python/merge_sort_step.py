@@ -1,0 +1,111 @@
+import csv
+import os
+import sys
+
+def merge_sort_step(data, output_file):
+    if len(data) <= 1:
+        return data
+
+    mid = len(data) // 2
+    left = data[:mid]
+    right = data[mid:]
+
+    left = merge_sort_step(left, output_file)
+    right = merge_sort_step(right, output_file)
+
+    merged = merge(left, right, output_file)
+
+    return merged
+
+def merge(left, right, output_file):
+    merged = []
+    left_index = 0
+    right_index = 0
+
+    while left_index < len(left) and right_index < len(right):
+        if left[left_index][0] <= right[right_index][0]:
+            merged.append(left[left_index])
+            left_index += 1
+        else:
+            merged.append(right[right_index])
+            right_index += 1
+    
+    merged.extend(left[left_index:])
+    merged.extend(right[right_index:])
+
+    with open(output_file, 'a') as f:
+        f.write(f"Merging: {[x[0] for x in left]} and {[x[0] for x in right]}\n")
+        f.write(f"Result: {[x[0] for x in merged]}\n\n")
+
+    return merged
+
+def main():
+    # Read file name from user
+    filename = input("Enter file name: ")
+    
+    if not os.path.exists(filename):
+        print(f"File not found.")
+        return
+
+    try:
+        start_row = int(input("Enter start row: "))
+        end_row = int(input("Enter end row: "))
+
+        data_list = []
+
+        with open(filename, 'r', newline='') as file:
+            for current_line_number, line in enumerate(file, 1):
+                if current_line_number < start_row:
+                    continue
+
+                if current_line_number > end_row:
+                    break
+
+                line = line.strip()
+
+                if not line: 
+                    continue
+                
+                parts = line.split(',') 
+
+                if len(parts) == 2: 
+                    try:
+                        num = int(parts[0].strip()) 
+                        text = parts[1] .strip()     
+                        data_list.append((num, text))
+                    except ValueError:
+                        print(f"Warning: Could not convert '{parts[0]}' to integer in row {current_line_number}. Skipping row.", file=sys.stderr)
+                    except Exception as e: 
+                        print(f"Warning: Error processing row {current_line_number}: {e}.", file=sys.stderr)
+                else:
+                    print(f"Warning: Row {current_line_number} is invalid). Skipping row.", file=sys.stderr)
+
+        if not data_list:
+            print(f"No valid data found in rows {start_row}-{end_row} from '{filename}'. Please check the input file and row range.", file=sys.stderr)
+            return
+
+        output_file = f"merge_sort_step_{start_row}_{end_row}.txt"
+
+        with open(output_file, 'a') as f:
+            f.write(f"Merge Sort Steps for rows {start_row}-{end_row}\n")
+            f.write(f"Initial data ({len(data_list)} elements):\n{data_list}\n\n")
+            f.write("Sorting Steps:\n\n")
+
+        sorted_data = merge_sort_step(data_list, output_file)
+
+        with open(output_file, 'a') as f:
+            f.write("\nFinal Sorted Data:\n")
+            for num, text in sorted_data:
+                f.write(f"{num}, {text}\n")
+
+        print(f"Merged sort steps saved to {output_file}")
+
+    except ValueError:
+        print("Error: Please enter valid integer numbers for row values.", file=sys.stderr)
+    except Exception as e:
+        print(f"An unexpected error occurred: {str(e)}", file=sys.stderr)
+
+if __name__ == "__main__":
+    main()
+
+                        

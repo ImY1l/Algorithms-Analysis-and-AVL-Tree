@@ -1,5 +1,8 @@
 import time
 import random
+import os
+import sys
+import csv
 
 # Binary search implementation
 def binary_search(array, target):
@@ -19,17 +22,25 @@ def binary_search(array, target):
 
 def main():
     # Read file name from user
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    
     filename = input("Enter file name: ")
+    input_filepath = os.path.join(script_dir, filename)
 
     data_list = []
 
     try:
-        with open(filename, 'r') as reader:
-            for line in reader:
-                parts = line.strip().split(",")
-                if parts[0].strip():
-                    temp_num = int(parts[0].strip().replace('"', ''))
-                    data_list.append(temp_num)
+        with open(input_filepath, 'r', newline='') as file:
+            reader = csv.reader(file)
+            for row in reader:
+                if row and row[0].strip():
+                    try:
+                        temp_num = int(row[0].strip().replace('"', ''))
+                        data_list.append(temp_num)
+                    except ValueError:
+                        print(f"Warning: Could not convert '{row[0]}' to integer. Skipping row.", file=sys.stderr)
+                    except IndexError:
+                        print(f"Warning: Row has missing data. Skipping row.", file=sys.stderr)
 
     except FileNotFoundError:
         print("File not found.")
@@ -78,6 +89,8 @@ def main():
 
     except IOError:
         print("Error writing output file.")
+
+    print(f"File saved to {output_file}")
 
 if __name__ == "__main__":
     main()
