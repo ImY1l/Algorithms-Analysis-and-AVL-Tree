@@ -1,3 +1,0 @@
-Best case time: 3.900 microseconds. 
-Average case time: 5.100 microseconds. 
-Worst case time: 1.500 microseconds. 

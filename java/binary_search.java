@@ -79,17 +79,17 @@ public class binary_search{
         double worstCaseTime = (end - start) / 1_000.0;
 
         // Output file to binary_search_n.txt
-        String outputFile = "binary_search_n.txt";
+        String outputFile = "binary_search_" + n + ".txt";
         try (PrintWriter writer = new PrintWriter(outputFile))
         {
-            writer.printf("Best case time: %.3f microseconds. %n", bestCaseTime);
-            writer.printf("Average case time: %.3f microseconds. %n", averageCaseTime);
-            writer.printf("Worst case time: %.3f microseconds. %n", worstCaseTime);
+            writer.printf("Best case time: %.1f microseconds. %n", bestCaseTime);
+            writer.printf("Average case time: %.1f microseconds. %n", averageCaseTime);
+            writer.printf("Worst case time: %.1f microseconds. %n", worstCaseTime);
         } catch (IOException e) {
             System.out.println("Error writing output file.");
         }
 
-        System.out.println("File saved to ");
+        System.out.println("File saved to " + outputFile + ".");
     }
 
     // Binary search implementation

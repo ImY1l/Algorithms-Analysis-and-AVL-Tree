@@ -79,13 +79,13 @@ def main():
     worst_case_time = (end - start) / 1_000.0
 
     # Output file to binary_search_n.txt
-    output_file = "binary_search_n.txt"
+    output_file = "binary_search_" + str(n) + ".txt"
 
     try:
         with open(output_file, "w") as writer:
-            writer.write(f"Best case time: {best_case_time: .3f} microseconds. \n")
-            writer.write(f"Average case time: {average_case_time: .3f} microseconds. \n")
-            writer.write(f"Worst case time: {worst_case_time: .3f} microseconds. \n")
+            writer.write(f"Best case time: {best_case_time: .1f} microseconds. \n")
+            writer.write(f"Average case time: {average_case_time: .1f} microseconds. \n")
+            writer.write(f"Worst case time: {worst_case_time: .1f} microseconds. \n")
 
     except IOError:
         print("Error writing output file.")
