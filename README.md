@@ -9,8 +9,8 @@ This project implements and analyzes sorting and searching algorithms as part of
 
 ## 📁 Project Structure
 
-| Component                 | File Name Pattern             | Purpose                                                                 |
-|--------------------------|-------------------------------|-------------------------------------------------------------------------|
+| Component                | File Name Pattern             | Purpose                                                                |
+|--------------------------|-------------------------------|------------------------------------------------------------------------|
 | Dataset (Pre-generated)  | `dataset_*.csv`               | Contains randomized datasets used for sorting and searching algorithms |
 | Merge Sort (Stepwise)    | `merge_sort_step`             | Performs and logs step-by-step merge sort on a specified row range     |
 | Quick Sort (Stepwise)    | `quick_sort_step`             | Performs and logs step-by-step quick sort on a specified row range     |

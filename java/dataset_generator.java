@@ -3,11 +3,7 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.Random;
 
-/**
- * Generates a dataset of unique random integers with associated strings
- * Output format: CSV file with each line containing "integer,string"
- */
-public class dataset_generator {
+public class dataset_generator{
     private static final int MAX_INT = 2_000_000_000; // Up to 2 billion
     private static final int STRING_LENGTH = 5;
     private static final String CHARACTERS = "abcdefghijklmnopqrstuvwxyz";
