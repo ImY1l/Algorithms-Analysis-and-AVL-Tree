@@ -3,19 +3,45 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class quick_sort_step {
-    private static int step_count = 0;
 
-    private static class data_entry {
-        final int number;
-        final String label;
-
-        data_entry(int number, String label) {
-            this.number = number;
-            this.label = label;
+    public static void main(String[] args) {
+        // Make sure the user gave us 3 arguments
+        if (args.length < 3) {
+            System.out.println("Usage: java quick_sort_step <filename> <startRow> <endRow>");
+            return;
         }
 
-        int compare_to(data_entry other) {
-            return this.number - other.number;
+        String fileName = args[0];
+        int from = Integer.parseInt(args[1]);
+        int to = Integer.parseInt(args[2]);
+
+        // Read data from the datasets folder
+        List<DataItem> entries = readFromCSV("../datasets/" + fileName, from, to);
+
+        if (entries == null || entries.isEmpty()) {
+            System.out.println("Could not load data from file.");
+            return;
+        }
+
+        // Create a list to keep track of sorting steps
+        List<String> sortSteps = new ArrayList<>();
+        sortSteps.add(snapshot(entries)); // initial state
+
+        // Run quicksort and log each change
+        quickSort(entries, 0, entries.size() - 1, sortSteps);
+
+        // Save all the steps into a file in outputs folder
+        saveStepsToFile(sortSteps, fileName, from, to);
+    }
+
+    // This class stores one line from the CSV
+    static class DataItem {
+        int number;
+        String label;
+
+        DataItem(int number, String label) {
+            this.number = number;
+            this.label = label;
         }
 
         public String toString() {
@@ -23,150 +49,101 @@ public class quick_sort_step {
         }
     }
 
-    private static List<data_entry> read_data_from_file(String path, int start_line, int end_line) throws IOException {
-        List<data_entry> results = new ArrayList<>();
-        BufferedReader reader = new BufferedReader(new FileReader("../datasets/" + path));
-        String current_line;
-        int line_no = 0;
+    // Reads a portion of a CSV file (from line start to end)
+    static List<DataItem> readFromCSV(String path, int start, int end) {
+        List<DataItem> list = new ArrayList<>();
+        int lineNum = 0;
 
-        try {
-            while ((current_line = reader.readLine()) != null) {
-                line_no++;
-                if (line_no < start_line) continue;
-                if (line_no > end_line) break;
+        try (BufferedReader reader = new BufferedReader(new FileReader(path))) {
+            String line;
 
-                int split_at = current_line.indexOf(',');
-                if (split_at > 0) {
+            while ((line = reader.readLine()) != null) {
+                lineNum++;
+
+                if (lineNum < start) continue;
+                if (lineNum > end) break;
+
+                String[] parts = line.split(",");
+                if (parts.length == 2) {
                     try {
-                        int num = Integer.parseInt(current_line.substring(0, split_at).trim());
-                        String text = current_line.substring(split_at + 1).trim();
-                        results.add(new data_entry(num, text));
-                    } catch (NumberFormatException e) {
-                        System.err.println("Malformed entry at line " + line_no);
+                        int num = Integer.parseInt(parts[0].trim());
+                        String text = parts[1].trim();
+                        list.add(new DataItem(num, text));
+                    } catch (NumberFormatException ignore) {
+                        // skip any line where the number part is invalid
                     }
                 }
             }
-        } finally {
-            reader.close();
+        } catch (IOException e) {
+            System.err.println("Error reading file: " + e.getMessage());
+            return null;
         }
 
-        return results;
+        return list;
     }
 
-    private static void log_step(List<data_entry> list, int pivot_idx, BufferedWriter out,
-                              String note, int from, int to) throws IOException {
-        step_count++;
-
-        out.write("Step " + step_count + ": " + note);
-        if (from >= 0 && to >= 0) {
-            out.write(" (Between indices " + from + " and " + to + ")");
+    // Returns a string showing the current state of the list
+    static String snapshot(List<DataItem> items) {
+        StringBuilder sb = new StringBuilder("[");
+        for (int i = 0; i < items.size(); i++) {
+            sb.append(items.get(i));
+            if (i < items.size() - 1) sb.append(", ");
         }
-        out.write("\n");
-
-        out.write("Array: [");
-        for (int i = 0; i < list.size(); i++) {
-            if (i > 0) out.write(", ");
-            if (i == pivot_idx) out.write("*");
-            out.write(list.get(i).toString());
-            if (i == pivot_idx) out.write("*");
-        }
-        out.write("]\n");
-
-        if (pivot_idx != -1) {
-            out.write("Pivot = " + list.get(pivot_idx).number + "\n");
-        }
-
-        out.write("\n");
+        sb.append("]");
+        return sb.toString();
     }
 
-    private static void quick_sort(List<data_entry> list, int start, int end, BufferedWriter out) throws IOException {
-        if (start < end) {
-            int pivot_position = partition(list, start, end, out);
-            quick_sort(list, start, pivot_position - 1, out);
-            quick_sort(list, pivot_position + 1, end, out);
+    // Save the sorting steps to a text file
+    static void saveStepsToFile(List<String> steps, String inputName, int start, int end) {
+        // Make sure the outputs folder exists
+        new File("../outputs").mkdirs();
+
+        String outputName = "../outputs/quick_sort_step_" + start + "_" + end + ".txt";
+
+        try (PrintWriter writer = new PrintWriter(new FileWriter(outputName))) {
+            for (String step : steps) {
+                writer.println(step);
+            }
+            System.out.println("Saved sort steps to " + outputName);
+        } catch (IOException e) {
+            System.err.println("Failed to write steps: " + e.getMessage());
         }
     }
 
-    private static int partition(List<data_entry> list, int low, int high, BufferedWriter out) throws IOException {
-        data_entry pivot = list.get(high);
-        log_step(list, high, out, "Picking pivot", low, high);
+    // Sort the list and record each change
+    static void quickSort(List<DataItem> list, int low, int high, List<String> steps) {
+        if (low < high) {
+            int pivot = partition(list, low, high, steps);
+            steps.add("pi=" + pivot + " " + snapshot(list));
+            quickSort(list, low, pivot - 1, steps);
+            quickSort(list, pivot + 1, high, steps);
+        }
+    }
 
+
+    // Do the partition and log swaps
+    static int partition(List<DataItem> list, int low, int high, List<String> steps) {
+        int pivotValue = list.get(high).number;
         int i = low - 1;
 
         for (int j = low; j < high; j++) {
-            if (list.get(j).compare_to(pivot) <= 0) {
+            if (list.get(j).number < pivotValue) {
                 i++;
-
-                data_entry tmp = list.get(i);
+                // Swap
+                DataItem temp = list.get(i);
                 list.set(i, list.get(j));
-                list.set(j, tmp);
-
-                if (i != j) {
-                    log_step(list, high, out, "Swapped elements", low, high);
-                }
+                list.set(j, temp);
             }
         }
 
-        data_entry temp = list.get(i + 1);
+        // Final pivot swap
+        DataItem temp = list.get(i + 1);
         list.set(i + 1, list.get(high));
         list.set(high, temp);
 
-        log_step(list, i + 1, out, "Partition complete", low, high);
-
         return i + 1;
     }
-
-    public static void main(String[] args) {
-        if (args.length != 3) {
-            System.out.println("Usage: java quick_sort_step <input_file> <start_row> <end_row>");
-            return;
-        }
-
-        BufferedWriter log_writer = null;
-
-        try {
-            String input_path = args[0];
-            int from = Integer.parseInt(args[1]);
-            int to = Integer.parseInt(args[2]);
-
-            List<data_entry> dataset = read_data_from_file(input_path, from, to);
-            
-            // Ensure outputs directory exists
-            new File("../outputs").mkdirs();
-            String output_path = "../outputs/quick_sort_step_" + from + "_" + to + ".txt";
-
-            log_writer = new BufferedWriter(new FileWriter(output_path));
-
-            log_writer.write("=== QUICK SORT STEP-BY-STEP ===\n");
-            log_writer.write("Input File: ../datasets/" + input_path + "\n");
-            log_writer.write("Rows Processed: " + from + " to " + to + "\n");
-            log_writer.write("Total Records: " + dataset.size() + "\n");
-            log_writer.write("Pivot Strategy: Use last element as pivot\n\n");
-
-            log_step(dataset, -1, log_writer, "Initial state", -1, -1);
-
-            long start_time = System.nanoTime();
-
-            if (dataset.size() > 1) {
-                log_writer.write("=== BEGIN SORT ===\n\n");
-                quick_sort(dataset, 0, dataset.size() - 1, log_writer);
-                log_writer.write("=== SORT COMPLETE ===\n\n");
-            }
-
-            long end_time = System.nanoTime();
-
-            log_step(dataset, -1, log_writer, "Sorted result", -1, -1);
-            log_writer.write("Steps Taken: " + step_count + "\n");
-            log_writer.write("Elapsed Time: " + ((end_time - start_time) / 1_000_000.0) + " ms\n");
-
-            System.out.println("Done! Sort log saved to ../outputs/" + output_path);
-
-        } catch (Exception e) {
-            System.err.println("Something went wrong: " + e.getMessage());
-        } finally {
-            if (log_writer != null) {
-                try { log_writer.close(); } catch (IOException ignore) {}
-            }
-        }
-    }
 }
+
+
+
