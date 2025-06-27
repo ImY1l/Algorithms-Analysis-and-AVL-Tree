@@ -6,11 +6,9 @@ import java.util.Random;
 public class dataset_generator {
     private static final int STRING_LENGTH = 5;
     private static final String CHARACTERS = "abcdefghijklmnopqrstuvwxyz";
-    private static final long MAX_NUMBER = 2_000_000_000L; // Up to 2 billion
+    private static final long MAX_NUMBER = 2_147_483_647L; // 2^31 - 1 (max 32-bit positive int)
 
-    /**
-     * Generates a random string of fixed length
-     */
+
     private static String generateRandomString(Random random) {
         StringBuilder sb = new StringBuilder(STRING_LENGTH);
         for (int i = 0; i < STRING_LENGTH; i++) {
@@ -19,9 +17,6 @@ public class dataset_generator {
         return sb.toString();
     }
 
-    /**
-     * Generates dataset using sequential numbers with random strings
-     */
     public static void generateDataset(long n, String filename) throws IOException {
         if (n <= 0) {
             throw new IllegalArgumentException("Dataset size must be positive");
@@ -33,9 +28,14 @@ public class dataset_generator {
         Random random = new Random();
         
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(filename))) {
-            for (long i = 1; i <= n; i++) {
-                writer.write(i + "," + generateRandomString(random));
+            // Use prime number stride to ensure uniqueness without storage
+            long stride = findLargestPrimeBelow(MAX_NUMBER / n);
+            long current = random.nextInt((int) (MAX_NUMBER - n * stride)) + 1;
+
+            for (long i = 0; i < n; i++) {
+                writer.write(current + "," + generateRandomString(random));
                 writer.newLine();
+                current = (current + stride) % MAX_NUMBER + 1;
                 
                 // Progress reporting
                 if (i % 10_000_000 == 0) {
@@ -44,6 +44,21 @@ public class dataset_generator {
                 }
             }
         }
+    }
+
+    private static long findLargestPrimeBelow(long limit) {
+        for (long i = limit; i >= 2; i--) {
+            if (isPrime(i)) return i;
+        }
+        return 2;
+    }
+
+    private static boolean isPrime(long n) {
+        if (n <= 1) return false;
+        for (long i = 2; i * i <= n; i++) {
+            if (n % i == 0) return false;
+        }
+        return true;
     }
 
     public static void main(String[] args) {
