@@ -47,7 +47,7 @@ public class dataset_generator {
         
         try {
             long size = Long.parseLong(args[0]);
-            String filename = "../datasets/dataset_random_" + size + ".csv";
+            String filename = "../datasets/dataset_" + size + ".csv";
             
             System.out.println("Generating random dataset with " + size + " entries...");
             generateDataset(size, filename);
