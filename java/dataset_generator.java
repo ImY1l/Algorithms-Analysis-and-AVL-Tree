@@ -2,75 +2,89 @@ import java.io.*;
 import java.util.*;
 
 public class dataset_generator {
-    private static final int STRING_LEN = 5;  // Could maybe make this configurable later
-    private static final String ALPHA = "abcdefghijklmnopqrstuvwxyz";
-    private static final long MAX_ALLOWED_SIZE = 1_000_000_000L;  // A safe upper bound
+    private static final int STRING_LENGTH = 5;
+    private static final String CHARACTERS = "abcdefghijklmnopqrstuvwxyz";
+    private static final long MAX_NUMBER = 1_000_000_000L; // 1 billion as required
+    private static final int CHUNK_SIZE = 10_000_000; // Process 10M records at a time
+    private static final int PROGRESS_INTERVAL = 1_000_000;
 
-    // Helper to create a random lowercase string of fixed length
-    private static String createRandomWord(Random rng) {
-        StringBuilder result = new StringBuilder(STRING_LEN);
-        
-        // Grab random characters from ALPHA
-        for (int i = 0; i < STRING_LEN; i++) {
-            int randIndex = rng.nextInt(ALPHA.length());
-            result.append(ALPHA.charAt(randIndex));
+    private static String generateRandomString(Random random) {
+        char[] chars = new char[STRING_LENGTH];
+        for (int i = 0; i < STRING_LENGTH; i++) {
+            chars[i] = CHARACTERS.charAt(random.nextInt(CHARACTERS.length()));
         }
-
-        return result.toString();
+        return new String(chars);
     }
 
-    // Generates a CSV dataset with format: number,randomString
-    public static void generateDataset(int count, String outputFilePath) throws IOException {
+    public static void generateDataset(long size, String filename) throws IOException {
+        if (size <= 0 || size > MAX_NUMBER) {
+            throw new IllegalArgumentException("Size must be between 1 and 1,000,000,000");
+        }
+
+        Random random = new Random();
+        long[] numbers = new long[CHUNK_SIZE];
         
-        // Just doing some bounds checking here
-        if (count <= 0 || count > MAX_ALLOWED_SIZE) {
-            throw new IllegalArgumentException("Size must be between 1 and " + MAX_ALLOWED_SIZE);
-        }
-
-        // Trying to ensure all numbers are unique
-        Set<Integer> generatedNums = new HashSet<>(count);
-        Random rand = new Random();
-
-        // Honestly not the most efficient way to get large amounts of unique numbers
-        while (generatedNums.size() < count) {
-            // Note: MAX_ALLOWED_SIZE casted to int; could cause issues for large values
-            int next = 1 + rand.nextInt((int) MAX_ALLOWED_SIZE);  
-            generatedNums.add(next);
-        }
-
-        // Convert set to list for shuffling
-        List<Integer> numList = new ArrayList<>(generatedNums);
-        Collections.shuffle(numList);  // Just to mix things up
-
-        // Now write everything to file line-by-line
-        try (BufferedWriter out = new BufferedWriter(new FileWriter(outputFilePath))) {
-            for (int value : numList) {
-                String entry = value + "," + createRandomWord(rand);
-                out.write(entry);
-                out.newLine();  // Next line in CSV
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(filename))) {
+            long remaining = size;
+            long base = 1; // Start from 1
+            
+            while (remaining > 0) {
+                int currentChunk = (int) Math.min(CHUNK_SIZE, remaining);
+                
+                // Fill array with sequential numbers
+                for (int i = 0; i < currentChunk; i++) {
+                    numbers[i] = base + i;
+                }
+                
+                // Fisher-Yates shuffle
+                for (int i = currentChunk - 1; i > 0; i--) {
+                    int j = random.nextInt(i + 1);
+                    long temp = numbers[i];
+                    numbers[i] = numbers[j];
+                    numbers[j] = temp;
+                }
+                
+                // Write shuffled chunk to file
+                for (int i = 0; i < currentChunk; i++) {
+                    writer.write(numbers[i] + "," + generateRandomString(random));
+                    writer.newLine();
+                    
+                    // Progress reporting
+                    if ((size - remaining + i) % PROGRESS_INTERVAL == 0) {
+                        System.out.printf("Progress: %,d/%,d (%.1f%%)%n",
+                                size - remaining + i, size, 
+                                ((size - remaining + i) * 100.0 / size));
+                    }
+                }
+                
+                base += currentChunk;
+                remaining -= currentChunk;
             }
         }
-
-        System.out.println("Done! Created file with " + count + " entries at: " + outputFilePath);
+        
+        System.out.println("Successfully generated dataset with " + size + " entries");
     }
 
     public static void main(String[] args) {
-        // Check if user gave us the number of entries they want
         if (args.length != 1) {
-            System.out.println("Usage: java DatasetGenerator <entry_count>");
+            System.out.println("Usage: java dataset_generator <size>");
             return;
         }
-
+        
         try {
-            int howMany = Integer.parseInt(args[0]);
-
-            // We'll stash files in this datasets folder, might want to parameterize later
-            String path = "../datasets/dataset_sample_" + howMany + ".csv";
-            generateDataset(howMany, path);
-        } catch (NumberFormatException nfEx) {
-            System.err.println("Oops, that didn't look like a valid number.");
-        } catch (IOException ioEx) {
-            System.err.println("Something went wrong during file writing: " + ioEx.getMessage());
+            long size = Long.parseLong(args[0]);
+            String filename = "../datasets/dataset_" + size + ".csv";
+            
+            System.out.println("Generating dataset with " + size + " entries...");
+            generateDataset(size, filename);
+            System.out.println("Saved to: " + filename);
+            
+        } catch (NumberFormatException e) {
+            System.err.println("Invalid size: must be a positive integer");
+        } catch (IllegalArgumentException e) {
+            System.err.println(e.getMessage());
+        } catch (IOException e) {
+            System.err.println("Error writing file: " + e.getMessage());
         }
     }
 }
