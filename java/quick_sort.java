@@ -1,18 +1,24 @@
+/**
+ * Quick sort implementation for large files (chunk-based sorting)
+ * Done for CCP6214, by Amena Mohammed Abdulkarem
+ * 
+ * The idea is to:
+ * 1. Split huge file into smaller files (chunks)
+ * 2. Sort each chunk separately using an iterative quick sort
+ * 3. Merge everything back in sorted order
+ * 
+ * Note: We only time the final merge step (I/O excluded)
+ */
+
 import java.io.*;
 import java.util.*;
 
-/**
- * Iterative QuickSort implementation that reads a CSV file, sorts by numeric value,
- * and writes the sorted output. Handles large datasets without stack overflow.
- */
 public class quick_sort {
 
-    /**
-     * Represents a single data item with a number and associated text
-     */
+    // Basic structure for holding our number + text lines
     static class Data {
-        final int number;  // The numeric value used for sorting
-        final String text; // The associated text data
+        final int number;
+        final String text;
 
         Data(int number, String text) {
             this.number = number;
@@ -20,162 +26,192 @@ public class quick_sort {
         }
     }
 
-    public static void main(String[] args) {
-        // Verify command line argument
+    private static final int CHUNK_SIZE = 5000000;  // tweak based on memory limits
+
+    public static void main(String[] args) throws IOException {
         if (args.length < 1) {
             System.out.println("Usage: java quick_sort <input_filename>");
             return;
         }
 
-        // Direct path to datasets folder
-        String inputPath = "../datasets/" + args[0];
-        
-        // Check if file exists
-        if (!new File(inputPath).exists()) {
-            System.out.println("Error: Input file not found");
+        String datasetPath = "../datasets/" + args[0];
+        File inFile = new File(datasetPath);
+        if (!inFile.exists()) {
+            System.err.println("Oops: File doesn't exist.");
             return;
         }
 
-        // Read and validate data
-        List<Data> items = readDataFromFile(inputPath);
-        if (items == null || items.isEmpty()) {
-            System.out.println("Error: No valid data found");
-            return;
-        }
+        File tempFolder = new File("temp_chunks");
+        tempFolder.mkdir();  // ignore result here for now
 
-        // Time the sorting process
-        long start = System.currentTimeMillis();
-        quickSortIterative(items);
-        long runtime = System.currentTimeMillis() - start;
+        List<String> chunkPaths = new ArrayList<>();
 
-        // Write sorted output
-        String outputPath = prepareOutputFilePath(args[0]);
-        if (!writeSortedData(items, outputPath)) {
-            System.out.println("Error: Could not write output file");
-            return;
-        }
+        // === PHASE 1: Read & split into sorted chunks ===
+        try (BufferedReader br = new BufferedReader(new FileReader(inFile))) {
+            String currentLine;
+            int chunkNo = 0;
+            List<Data> collector = new ArrayList<>(CHUNK_SIZE);
 
-        // Print only the runtime as required
-        System.out.println(runtime);
-    }
-
-    /**
-     * Reads and parses CSV data file
-     */
-    private static List<Data> readDataFromFile(String path) {
-        List<Data> items = new ArrayList<>();
-        
-        try (BufferedReader reader = new BufferedReader(new FileReader(path))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                // Split on first comma only to handle text with commas
-                String[] parts = line.split(",", 2);
-                if (parts.length == 2) {
+            while ((currentLine = br.readLine()) != null) {
+                String[] bits = currentLine.split(",", 2);
+                if (bits.length == 2) {
                     try {
-                        int num = Integer.parseInt(parts[0].trim());
-                        String txt = parts[1].trim();
-                        items.add(new Data(num, txt));
+                        int num = Integer.parseInt(bits[0].trim());
+                        String msg = bits[1].trim();
+                        collector.add(new Data(num, msg));
                     } catch (NumberFormatException e) {
-                        // Skip lines with invalid numbers
-                        continue;
+                        // skip line - not valid
                     }
                 }
+
+                if (collector.size() == CHUNK_SIZE) {
+                    dumpChunkToFile(collector, chunkNo, chunkPaths);
+                    chunkNo++;
+                    collector.clear(); // reset for next chunk
+                }
             }
-        } catch (IOException e) {
-            return null;
+
+            // Final bits
+            if (!collector.isEmpty()) {
+                dumpChunkToFile(collector, chunkNo, chunkPaths);
+            }
         }
-        return items;
+
+        // === PHASE 2: Merge sorted chunks into one file ===
+        long tStart = System.currentTimeMillis();
+        mergeChunks(chunkPaths, args[0]);
+        long tEnd = System.currentTimeMillis();
+
+        // Clean up temp files (optional really)
+        for (String f : chunkPaths) new File(f).delete();
+        tempFolder.delete();
+
+        System.out.println(tEnd - tStart);  // show sorting time
     }
 
-    /**
-     * Generates output file path in ../outputs/ folder
-     */
-    private static String prepareOutputFilePath(String filename) {
-        // Extract size from filename (e.g., "dataset_1000.csv" -> "1000")
-        String size = filename.replace("dataset_", "")
-                             .replace("sample_", "")
-                             .replace(".csv", "");
-        
-        // Ensure outputs directory exists
-        new File("../outputs").mkdirs();
-        
-        return "../outputs/quick_sort_" + size + ".csv";
-    }
+    private static void dumpChunkToFile(List<Data> chunk, int index, List<String> fileList) throws IOException {
+        // Sort in-place before saving
+        sortWithQuick(chunk);
 
-    /**
-     * Writes sorted data to CSV file
-     */
-    private static boolean writeSortedData(List<Data> data, String path) {
-        try (PrintWriter writer = new PrintWriter(new FileWriter(path))) {
-            for (Data item : data) {
-                writer.println(item.number + "," + item.text);
+        String fname = "temp_chunks/chunk_" + index + ".csv";
+        try (PrintWriter out = new PrintWriter(new FileWriter(fname))) {
+            for (Data entry : chunk) {
+                out.println(entry.number + "," + entry.text);
             }
+        }
+
+        fileList.add(fname);
+    }
+
+    private static void mergeChunks(List<String> chunkFiles, String originalFile) throws IOException {
+        PriorityQueue<ChunkReader> heap = new PriorityQueue<>(Comparator.comparingInt(c -> c.current.number));
+
+        for (String chunkPath : chunkFiles) {
+            ChunkReader cr = new ChunkReader(chunkPath);
+            if (cr.hasMore()) {
+                heap.add(cr);
+            }
+        }
+
+        String finalOutput = getOutputPath(originalFile);
+        try (PrintWriter out = new PrintWriter(new FileWriter(finalOutput))) {
+            while (!heap.isEmpty()) {
+                ChunkReader smallest = heap.poll();
+                out.println(smallest.current.number + "," + smallest.current.text);
+                if (smallest.loadNext()) {
+                    heap.add(smallest);
+                } else {
+                    smallest.close();  // no more data
+                }
+            }
+        }
+    }
+
+    static class ChunkReader {
+        BufferedReader reader;
+        Data current;
+        String sourceFile;
+
+        ChunkReader(String filePath) throws IOException {
+            this.sourceFile = filePath;
+            this.reader = new BufferedReader(new FileReader(filePath));
+            loadNext();  // initialize first record
+        }
+
+        boolean loadNext() throws IOException {
+            String nextLine = reader.readLine();
+            if (nextLine == null) {
+                current = null;
+                return false;
+            }
+            String[] pieces = nextLine.split(",", 2);
+            if (pieces.length < 2) return false;  // skip malformed line
+            current = new Data(Integer.parseInt(pieces[0].trim()), pieces[1].trim());
             return true;
-        } catch (IOException e) {
-            return false;
+        }
+
+        boolean hasMore() {
+            return current != null;
+        }
+
+        void close() throws IOException {
+            reader.close();
         }
     }
 
-    /**
-     * Iterative QuickSort implementation using a stack
-     */
-    private static void quickSortIterative(List<Data> data) {
-        // Stack to keep track of subarrays to process
-        Stack<Integer> stack = new Stack<>();
-        
-        // Push initial range (whole array)
-        stack.push(0);
-        stack.push(data.size() - 1);
+    private static String getOutputPath(String fname) {
+        String cleaned = fname.replace("dataset_", "").replace(".csv", "");
+        new File("../outputs").mkdirs();  // make sure it exists
+        return "../outputs/quick_sort_" + cleaned + ".csv";
+    }
 
-        while (!stack.isEmpty()) {
-            // Get next subarray to process
-            int hi = stack.pop();
-            int lo = stack.pop();
+    // Iterative quick sort for the chunk — requirement: must not use recursion
+    private static void sortWithQuick(List<Data> list) {
+        Stack<Integer> bounds = new Stack<>();
+        bounds.push(0);
+        bounds.push(list.size() - 1);
 
-            if (lo < hi) {
-                // Partition and get pivot position
-                int pivot = partition(data, lo, hi);
+        while (!bounds.isEmpty()) {
+            int end = bounds.pop();
+            int start = bounds.pop();
 
-                // Push left subarray indices if it has elements
-                if (pivot - 1 > lo) {
-                    stack.push(lo);
-                    stack.push(pivot - 1);
+            if (start < end) {
+                int pivotPos = partition(list, start, end);
+
+                // Left partition
+                if (pivotPos - 1 > start) {
+                    bounds.push(start);
+                    bounds.push(pivotPos - 1);
                 }
 
-                // Push right subarray indices if it has elements
-                if (pivot + 1 < hi) {
-                    stack.push(pivot + 1);
-                    stack.push(hi);
+                // Right partition
+                if (pivotPos + 1 < end) {
+                    bounds.push(pivotPos + 1);
+                    bounds.push(end);
                 }
             }
         }
     }
 
-    /**
-     * Partitions the subarray using last element as pivot
-     */
-    private static int partition(List<Data> data, int lo, int hi) {
-        int pivotVal = data.get(hi).number;
-        int i = lo - 1;
+    private static int partition(List<Data> items, int low, int high) {
+        int pivotVal = items.get(high).number;
+        int i = low - 1;
 
-        for (int j = lo; j < hi; j++) {
-            if (data.get(j).number < pivotVal) {
+        for (int j = low; j < high; j++) {
+            if (items.get(j).number < pivotVal) {
                 i++;
-                swap(data, i, j);
+                swap(items, i, j);
             }
         }
 
-        // Move pivot to correct position
-        swap(data, i + 1, hi);
+        swap(items, i + 1, high);
         return i + 1;
     }
 
-    /**
-     * Swaps two elements in the list
-     */
-    private static void swap(List<Data> data, int i, int j) {
-        Data temp = data.get(i);
-        data.set(i, data.get(j));
-        data.set(j, temp);
+    private static void swap(List<Data> arr, int a, int b) {
+        // Could inline this, but clearer this way
+        Data temp = arr.get(a);
+        arr.set(a, arr.get(b));
+        arr.set(b, temp);
     }
 }
