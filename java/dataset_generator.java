@@ -1,68 +1,42 @@
-import java.io.*;
-import java.util.*;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.Random;
 
 public class dataset_generator {
     private static final int STRING_LENGTH = 5;
     private static final String CHARACTERS = "abcdefghijklmnopqrstuvwxyz";
-    private static final long MAX_NUMBER = 1_000_000_000L; // 1 billion as required
-    private static final int CHUNK_SIZE = 10_000_000; // Process 10M records at a time
-    private static final int PROGRESS_INTERVAL = 1_000_000;
+    private static final long MAX_NUMBER = 2_147_483_647L; // 2^31 - 1 (max 32-bit positive int)
 
     private static String generateRandomString(Random random) {
-        char[] chars = new char[STRING_LENGTH];
+        StringBuilder sb = new StringBuilder(STRING_LENGTH);
         for (int i = 0; i < STRING_LENGTH; i++) {
-            chars[i] = CHARACTERS.charAt(random.nextInt(CHARACTERS.length()));
+            sb.append(CHARACTERS.charAt(random.nextInt(CHARACTERS.length())));
         }
-        return new String(chars);
+        return sb.toString();
     }
 
-    public static void generateDataset(long size, String filename) throws IOException {
-        if (size <= 0 || size > MAX_NUMBER) {
-            throw new IllegalArgumentException("Size must be between 1 and 1,000,000,000");
+    public static void generateDataset(long n, String filename) throws IOException {
+        if (n <= 0) {
+            throw new IllegalArgumentException("Dataset size must be positive");
         }
 
         Random random = new Random();
-        long[] numbers = new long[CHUNK_SIZE];
         
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(filename))) {
-            long remaining = size;
-            long base = 1; // Start from 1
-            
-            while (remaining > 0) {
-                int currentChunk = (int) Math.min(CHUNK_SIZE, remaining);
+            for (long i = 0; i < n; i++) {
+                // Generate completely random number between 1 and MAX_NUMBER
+                long number = 1 + random.nextLong(MAX_NUMBER);
+                writer.write(number + "," + generateRandomString(random));
+                writer.newLine();
                 
-                // Fill array with sequential numbers
-                for (int i = 0; i < currentChunk; i++) {
-                    numbers[i] = base + i;
+                // Progress reporting
+                if (i % 10_000_000 == 0) {
+                    System.out.printf("Generated %,d of %,d entries (%.1f%%)%n",
+                            i, n, (i * 100.0 / n));
                 }
-                
-                // Fisher-Yates shuffle
-                for (int i = currentChunk - 1; i > 0; i--) {
-                    int j = random.nextInt(i + 1);
-                    long temp = numbers[i];
-                    numbers[i] = numbers[j];
-                    numbers[j] = temp;
-                }
-                
-                // Write shuffled chunk to file
-                for (int i = 0; i < currentChunk; i++) {
-                    writer.write(numbers[i] + "," + generateRandomString(random));
-                    writer.newLine();
-                    
-                    // Progress reporting
-                    if ((size - remaining + i) % PROGRESS_INTERVAL == 0) {
-                        System.out.printf("Progress: %,d/%,d (%.1f%%)%n",
-                                size - remaining + i, size, 
-                                ((size - remaining + i) * 100.0 / size));
-                    }
-                }
-                
-                base += currentChunk;
-                remaining -= currentChunk;
             }
         }
-        
-        System.out.println("Successfully generated dataset with " + size + " entries");
     }
 
     public static void main(String[] args) {
@@ -73,18 +47,17 @@ public class dataset_generator {
         
         try {
             long size = Long.parseLong(args[0]);
-            String filename = "../datasets/dataset_" + size + ".csv";
+            String filename = "../datasets/dataset_random_" + size + ".csv";
             
-            System.out.println("Generating dataset with " + size + " entries...");
+            System.out.println("Generating random dataset with " + size + " entries...");
             generateDataset(size, filename);
-            System.out.println("Saved to: " + filename);
-            
+            System.out.println("Dataset successfully generated: " + filename);
         } catch (NumberFormatException e) {
             System.err.println("Invalid size: must be a positive integer");
         } catch (IllegalArgumentException e) {
             System.err.println(e.getMessage());
         } catch (IOException e) {
-            System.err.println("Error writing file: " + e.getMessage());
+            System.err.println("Error writing to file: " + e.getMessage());
         }
     }
 }
