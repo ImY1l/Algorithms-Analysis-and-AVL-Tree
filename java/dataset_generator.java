@@ -4,7 +4,7 @@ import java.util.*;
 public class dataset_generator {
     private static final int STRING_LEN = 5;  // Could maybe make this configurable later
     private static final String ALPHA = "abcdefghijklmnopqrstuvwxyz";
-    private static final long MAX_ALLOWED_SIZE = 2_000_000_000L;  // Seems like a safe upper bound
+    private static final long MAX_ALLOWED_SIZE = 1_000_000_000L;  // A safe upper bound
 
     // Helper to create a random lowercase string of fixed length
     private static String createRandomWord(Random rng) {
