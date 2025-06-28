@@ -27,7 +27,7 @@ public class binary_search{
             return;
         }
 
-        int chunkSize = 1000;
+        int chunkSize = 5_000_000;
         int totalCount = 0;
         double totalBestTime = 0, totalAvgTime = 0, totalWorstTime = 0;
 

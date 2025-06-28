@@ -61,7 +61,7 @@ def main():
     filename = input("Enter file name: ")
     input_filepath = os.path.join(input_dir, filename)
 
-    chunk_size = 1000
+    chunk_size = 5_000_000
     total_entries = 0
     total_times = {"best": 0, "average": 0, "worst": 0}
 
