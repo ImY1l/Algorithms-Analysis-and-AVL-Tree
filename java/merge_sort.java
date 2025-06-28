@@ -1,15 +1,24 @@
 import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.*;
 
 public class merge_sort {
-    private static class DataEntry {
-        int number;
-        String text;
+    private static final int CHUNK_SIZE = 5_000_000; // Records per chunk
+    private static final String TEMP_DIR = "../temp";
+    private static final String OUTPUT_DIR = "../outputs";
+
+    private static class DataEntry implements Comparable<DataEntry> {
+        final int number;
+        final String text;
 
         DataEntry(int number, String text) {
             this.number = number;
             this.text = text;
+        }
+
+        @Override
+        public int compareTo(DataEntry other) {
+            return Integer.compare(this.number, other.number);
         }
 
         @Override
@@ -27,103 +36,154 @@ public class merge_sort {
         long startTime = System.currentTimeMillis();
 
         try {
-            // Read input file from ../datasets/
-            List<DataEntry> entries = readDataEntries(args[0]);
-            
-            // Perform merge sort
-            if (entries.size() > 1) {
-                mergeSort(entries, 0, entries.size() - 1);
+            List<File> sortedChunks = processInChunks(args[0]);
+            String fileName = args[0].replaceFirst("dataset_", "");
+            String outputFile = OUTPUT_DIR + "/merge_sort_" + fileName;
+            mergeSortedChunks(sortedChunks, outputFile);
+
+            // Cleanup temporary files
+            for (File chunk : sortedChunks) {
+                chunk.delete();
             }
-            
-            // Write sorted output to ../outputs/
-            String outputFile = "../outputs/merge_sort_" + entries.size() + ".csv";
-            ensureOutputDirectoryExists();
-            writeOutput(entries, outputFile);
-            
-            // Print execution time
-            long endTime = System.currentTimeMillis();
-            System.out.println("Running time: " + (endTime - startTime) + " ms");
-            
-        } catch (IOException e) {
-            System.err.println("Error processing file: " + e.getMessage());
+
+            System.out.println("Processing completed in " + 
+                (System.currentTimeMillis() - startTime) + " ms");
+        } catch (Exception e) {
+            System.err.println("Error during sorting: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
-    private static void ensureOutputDirectoryExists() {
-        File outputsDir = new File("../outputs");
-        if (!outputsDir.exists()) {
-            outputsDir.mkdirs();
-        }
-    }
+    private static List<File> processInChunks(String inputFile) throws Exception {
+        new File(TEMP_DIR).mkdirs();
+        ExecutorService executor = Executors.newFixedThreadPool(
+            Runtime.getRuntime().availableProcessors());
+        List<Future<File>> futures = new ArrayList<>();
 
-    private static List<DataEntry> readDataEntries(String filename) throws IOException {
-        List<DataEntry> entries = new ArrayList<>();
-        try (BufferedReader reader = new BufferedReader(new FileReader("../datasets/" + filename))) {
+        try (BufferedReader reader = new BufferedReader(
+            new FileReader("../datasets/" + inputFile))) {
+            
+            List<DataEntry> currentChunk = new ArrayList<>(CHUNK_SIZE);
+            int chunkCounter = 0;
             String line;
+
             while ((line = reader.readLine()) != null) {
-                String[] parts = line.split(",");
+                String[] parts = line.split(",", 2);
                 if (parts.length == 2) {
-                    entries.add(new DataEntry(Integer.parseInt(parts[0]), parts[1]));
+                    currentChunk.add(new DataEntry(
+                        Integer.parseInt(parts[0]), parts[1]));
+                }
+
+                if (currentChunk.size() >= CHUNK_SIZE) {
+                    final int chunkNumber = chunkCounter++;
+                    List<DataEntry> chunkToSort = new ArrayList<>(currentChunk);
+                    
+                    futures.add(executor.submit(() -> {
+                        try {
+                            return sortAndSaveChunk(chunkToSort, chunkNumber);
+                        } catch (IOException e) {
+                            throw new RuntimeException("Failed to process chunk " + chunkNumber, e);
+                        }
+                    }));
+                    
+                    currentChunk = new ArrayList<>(CHUNK_SIZE);
                 }
             }
+
+            // Process remaining records in the last chunk
+            if (!currentChunk.isEmpty()) {
+                final int finalChunkNumber = chunkCounter;
+                List<DataEntry> finalChunk = new ArrayList<>(currentChunk);
+                
+                futures.add(executor.submit(() -> {
+                    try {
+                        return sortAndSaveChunk(finalChunk, finalChunkNumber);
+                    } catch (IOException e) {
+                        throw new RuntimeException("Failed to process final chunk", e);
+                    }
+                }));
+            }
+
+            // Collect all chunk files
+            List<File> chunkFiles = new ArrayList<>();
+            for (Future<File> future : futures) {
+                try {
+                    chunkFiles.add(future.get());
+                } catch (ExecutionException e) {
+                    throw new Exception("Chunk processing failed: " + e.getCause().getMessage());
+                }
+            }
+            return chunkFiles;
+        } finally {
+            executor.shutdown();
         }
-        return entries;
     }
 
-    private static void writeOutput(List<DataEntry> entries, String filename) throws IOException {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(filename))) {
-            for (DataEntry entry : entries) {
+    private static File sortAndSaveChunk(List<DataEntry> chunk, int chunkNumber) 
+        throws IOException {
+        Collections.sort(chunk);
+        File chunkFile = new File(TEMP_DIR + "/chunk_" + chunkNumber + ".tmp");
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(chunkFile))) {
+            for (DataEntry entry : chunk) {
                 writer.write(entry.toString());
                 writer.newLine();
             }
         }
+        return chunkFile;
     }
 
-    private static void mergeSort(List<DataEntry> entries, int left, int right) {
-        if (left < right) {
-            int mid = left + (right - left) / 2;
-            mergeSort(entries, left, mid);
-            mergeSort(entries, mid + 1, right);
-            merge(entries, left, mid, right);
-        }
-    }
+    private static void mergeSortedChunks(List<File> chunks, String outputFile) 
+        throws IOException {
+        PriorityQueue<ChunkReader> queue = new PriorityQueue<>();
+        new File(OUTPUT_DIR).mkdirs();
 
-    private static void merge(List<DataEntry> entries, int left, int mid, int right) {
-        int n1 = mid - left + 1;
-        int n2 = right - mid;
-
-        DataEntry[] L = new DataEntry[n1];
-        DataEntry[] R = new DataEntry[n2];
-
-        for (int i = 0; i < n1; i++) {
-            L[i] = entries.get(left + i);
-        }
-        for (int j = 0; j < n2; j++) {
-            R[j] = entries.get(mid + 1 + j);
-        }
-
-        int i = 0, j = 0, k = left;
-        while (i < n1 && j < n2) {
-            if (L[i].number <= R[j].number) {
-                entries.set(k, L[i]);
-                i++;
-            } else {
-                entries.set(k, R[j]);
-                j++;
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile))) {
+            // Initialize all chunk readers
+            for (File chunk : chunks) {
+                ChunkReader reader = new ChunkReader(chunk);
+                if (reader.next() != null) {
+                    queue.add(reader);
+                }
             }
-            k++;
+
+            // Merge all chunks
+            while (!queue.isEmpty()) {
+                ChunkReader reader = queue.poll();
+                writer.write(reader.current.toString());
+                writer.newLine();
+
+                if (reader.next() != null) {
+                    queue.add(reader);
+                } else {
+                    reader.close();
+                }
+            }
+        }
+    }
+
+    private static class ChunkReader implements Comparable<ChunkReader> {
+        private final BufferedReader reader;
+        private DataEntry current;
+
+        ChunkReader(File file) throws IOException {
+            this.reader = new BufferedReader(new FileReader(file));
         }
 
-        while (i < n1) {
-            entries.set(k, L[i]);
-            i++;
-            k++;
+        DataEntry next() throws IOException {
+            String line = reader.readLine();
+            if (line == null) return null;
+            String[] parts = line.split(",", 2);
+            current = new DataEntry(Integer.parseInt(parts[0]), parts[1]);
+            return current;
         }
 
-        while (j < n2) {
-            entries.set(k, R[j]);
-            j++;
-            k++;
+        void close() throws IOException {
+            reader.close();
+        }
+
+        @Override
+        public int compareTo(ChunkReader other) {
+            return current.compareTo(other.current);
         }
     }
 }
