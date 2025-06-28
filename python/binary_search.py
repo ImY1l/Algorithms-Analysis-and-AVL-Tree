@@ -57,8 +57,7 @@ def main():
         binary_search(data, best_case)
 
     end = time.perf_counter_ns()
-    best_case_time = (end - start) / 1_000.0
-
+    best_case_time = (end - start) / 1_000_000.0
     # Average case scenario calculation
     rand = random.Random()
     start = time.perf_counter_ns()
@@ -67,7 +66,7 @@ def main():
         binary_search(data, data[random_index])
         
     end = time.perf_counter_ns()
-    average_case_time = (end - start) / 1_000.0
+    average_case_time = (end - start) / 1_000_000.0
 
     # Worst case scenario calculation
     worst_case = float('inf')
@@ -76,16 +75,16 @@ def main():
         binary_search(data, worst_case)
 
     end = time.perf_counter_ns()
-    worst_case_time = (end - start) / 1_000.0
+    worst_case_time = (end - start) / 1_000_000.0
 
     # Output file to binary_search_n.txt
     output_file = "binary_search_" + str(n) + ".txt"
 
     try:
         with open(output_file, "w") as writer:
-            writer.write(f"Best case time: {best_case_time: .1f} microseconds. \n")
-            writer.write(f"Average case time: {average_case_time: .1f} microseconds. \n")
-            writer.write(f"Worst case time: {worst_case_time: .1f} microseconds. \n")
+            writer.write(f"Best case time: {best_case_time: .3f} ms. \n")
+            writer.write(f"Average case time: {average_case_time: .3f} ms. \n")
+            writer.write(f"Worst case time: {worst_case_time: .3f} ms. \n")
 
     except IOError:
         print("Error writing output file.")

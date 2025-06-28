@@ -55,7 +55,7 @@ public class binary_search{
         }
 
         long end = System.nanoTime();
-        double bestCaseTime = (end - start) / 1_000.0;
+        double bestCaseTime = (end - start) / 1_000_000.0;
 
         // Average case scenario calculation
         Random random = new Random();
@@ -66,7 +66,7 @@ public class binary_search{
             binarySearch(data, data[randomIndex]);
         }
         end = System.nanoTime();
-        double averageCaseTime = (end - start) / 1_000.0;
+        double averageCaseTime = (end - start) / 1_000_000.0;
 
         // Worst case scenario calculation
         int worstCase = data[n-1] + 1;
@@ -76,15 +76,15 @@ public class binary_search{
             binarySearch(data, worstCase);
         }
         end = System.nanoTime();
-        double worstCaseTime = (end - start) / 1_000.0;
+        double worstCaseTime = (end - start) / 1_000_000.0;
 
         // Output file to binary_search_n.txt
         String outputFile = "binary_search_" + n + ".txt";
         try (PrintWriter writer = new PrintWriter(outputFile))
         {
-            writer.printf("Best case time: %.1f microseconds. %n", bestCaseTime);
-            writer.printf("Average case time: %.1f microseconds. %n", averageCaseTime);
-            writer.printf("Worst case time: %.1f microseconds. %n", worstCaseTime);
+            writer.printf("Best case time: %.3f ms. %n", bestCaseTime);
+            writer.printf("Average case time: %.3f ms. %n", averageCaseTime);
+            writer.printf("Worst case time: %.3f ms. %n", worstCaseTime);
         } catch (IOException e) {
             System.out.println("Error writing output file.");
         }
