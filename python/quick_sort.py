@@ -1,6 +1,7 @@
 import os
 import sys
 import time
+import shutil
 
 # Configuration
 CHUNK_SIZE = 5_000_000  # Safe for 16GB RAM, improves speed
@@ -120,7 +121,7 @@ def combine_chunks(sorted_files, final_output_path):
         f.close()
     for f in sorted_files:
         os.remove(f)
-    os.rmdir(TEMP_DIR)
+    shutil.rmtree(TEMP_DIR)
 
 # Generate output file path from input filename
 def make_output_path(fname):
