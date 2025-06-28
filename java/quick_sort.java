@@ -1,123 +1,181 @@
 import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 /**
- * QuickSort algorithm implementation reads a CSV file, sorts it by the integer column using quick sort
- * (with last element as pivot), and saves the sorted result.
+ * Iterative QuickSort implementation that reads a CSV file, sorts by numeric value,
+ * and writes the sorted output. Handles large datasets without stack overflow.
  */
 public class quick_sort {
 
-    // Data class representing one row
-    static class DataItem {
-        int number;
-        String text;
+    /**
+     * Represents a single data item with a number and associated text
+     */
+    static class Data {
+        final int number;  // The numeric value used for sorting
+        final String text; // The associated text data
 
-        DataItem(int number, String text) {
+        Data(int number, String text) {
             this.number = number;
             this.text = text;
-        }
-
-        String format() {
-            return number + "," + text;
         }
     }
 
     public static void main(String[] args) {
+        // Verify command line argument
         if (args.length < 1) {
-            System.out.println("Usage: java QuickSort <dataset_filename>");
+            System.out.println("Usage: java quick_sort <input_filename>");
             return;
         }
 
-        String inputFilename = "../datasets/" + args[0];
-        List<DataItem> data = readCSV(inputFilename);
-
-        if (data == null || data.isEmpty()) {
-            System.out.println("Error: No data found in file.");
+        // Direct path to datasets folder
+        String inputPath = "../datasets/" + args[0];
+        
+        // Check if file exists
+        if (!new File(inputPath).exists()) {
+            System.out.println("Error: Input file not found");
             return;
         }
 
-        // Timing only the sorting part
-        long startTime = System.currentTimeMillis();
-        quickSort(data, 0, data.size() - 1);
-        long endTime = System.currentTimeMillis();
+        // Read and validate data
+        List<Data> items = readDataFromFile(inputPath);
+        if (items == null || items.isEmpty()) {
+            System.out.println("Error: No valid data found");
+            return;
+        }
 
-        String outputFilename = "../outputs/quick_sort_" + getDatasetSize(args[0]) + ".csv";
-        writeCSV(data, outputFilename);
+        // Time the sorting process
+        long start = System.currentTimeMillis();
+        quickSortIterative(items);
+        long runtime = System.currentTimeMillis() - start;
 
-        System.out.println("Sorting complete.");
-        System.out.println("Output saved to: " + outputFilename);
-        System.out.println("Execution time (ms): " + (endTime - startTime));
+        // Write sorted output
+        String outputPath = prepareOutputFilePath(args[0]);
+        if (!writeSortedData(items, outputPath)) {
+            System.out.println("Error: Could not write output file");
+            return;
+        }
+
+        // Print only the runtime as required
+        System.out.println(runtime);
     }
 
-    // Reads the dataset from a CSV file
-    private static List<DataItem> readCSV(String filePath) {
-        List<DataItem> list = new ArrayList<>();
-        try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
+    /**
+     * Reads and parses CSV data file
+     */
+    private static List<Data> readDataFromFile(String path) {
+        List<Data> items = new ArrayList<>();
+        
+        try (BufferedReader reader = new BufferedReader(new FileReader(path))) {
             String line;
-            while ((line = br.readLine()) != null) {
+            while ((line = reader.readLine()) != null) {
+                // Split on first comma only to handle text with commas
                 String[] parts = line.split(",", 2);
                 if (parts.length == 2) {
                     try {
                         int num = Integer.parseInt(parts[0].trim());
-                        String text = parts[1].trim();
-                        list.add(new DataItem(num, text));
+                        String txt = parts[1].trim();
+                        items.add(new Data(num, txt));
                     } catch (NumberFormatException e) {
-                        System.err.println("Skipping invalid line: " + line);
+                        // Skip lines with invalid numbers
+                        continue;
                     }
                 }
             }
         } catch (IOException e) {
-            System.err.println("Error reading file: " + filePath);
+            return null;
         }
-        return list;
+        return items;
     }
 
-    // Writes sorted data to a CSV file
-    private static void writeCSV(List<DataItem> list, String filePath) {
-        try (PrintWriter pw = new PrintWriter(new FileWriter(filePath))) {
-            for (DataItem item : list) {
-                pw.println(item.format());
+    /**
+     * Generates output file path in ../outputs/ folder
+     */
+    private static String prepareOutputFilePath(String filename) {
+        // Extract size from filename (e.g., "dataset_1000.csv" -> "1000")
+        String size = filename.replace("dataset_", "")
+                             .replace("sample_", "")
+                             .replace(".csv", "");
+        
+        // Ensure outputs directory exists
+        new File("../outputs").mkdirs();
+        
+        return "../outputs/quick_sort_" + size + ".csv";
+    }
+
+    /**
+     * Writes sorted data to CSV file
+     */
+    private static boolean writeSortedData(List<Data> data, String path) {
+        try (PrintWriter writer = new PrintWriter(new FileWriter(path))) {
+            for (Data item : data) {
+                writer.println(item.number + "," + item.text);
             }
+            return true;
         } catch (IOException e) {
-            System.err.println("Error writing file: " + filePath);
+            return false;
         }
     }
 
-    // Extracts number from filename like "dataset_100000.csv"
-    private static String getDatasetSize(String filename) {
-        return filename.replace("dataset_", "").replace(".csv", "");
-    }
+    /**
+     * Iterative QuickSort implementation using a stack
+     */
+    private static void quickSortIterative(List<Data> data) {
+        // Stack to keep track of subarrays to process
+        Stack<Integer> stack = new Stack<>();
+        
+        // Push initial range (whole array)
+        stack.push(0);
+        stack.push(data.size() - 1);
 
-    // QuickSort (last element as pivot)
-    private static void quickSort(List<DataItem> list, int low, int high) {
-        if (low < high) {
-            int pi = partition(list, low, high);
-            quickSort(list, low, pi - 1);
-            quickSort(list, pi + 1, high);
+        while (!stack.isEmpty()) {
+            // Get next subarray to process
+            int hi = stack.pop();
+            int lo = stack.pop();
+
+            if (lo < hi) {
+                // Partition and get pivot position
+                int pivot = partition(data, lo, hi);
+
+                // Push left subarray indices if it has elements
+                if (pivot - 1 > lo) {
+                    stack.push(lo);
+                    stack.push(pivot - 1);
+                }
+
+                // Push right subarray indices if it has elements
+                if (pivot + 1 < hi) {
+                    stack.push(pivot + 1);
+                    stack.push(hi);
+                }
+            }
         }
     }
 
-    // Partition method using last element as pivot
-    private static int partition(List<DataItem> list, int low, int high) {
-        int pivot = list.get(high).number;
-        int i = low - 1;
+    /**
+     * Partitions the subarray using last element as pivot
+     */
+    private static int partition(List<Data> data, int lo, int hi) {
+        int pivotVal = data.get(hi).number;
+        int i = lo - 1;
 
-        for (int j = low; j < high; j++) {
-            if (list.get(j).number < pivot) {
+        for (int j = lo; j < hi; j++) {
+            if (data.get(j).number < pivotVal) {
                 i++;
-                swap(list, i, j);
+                swap(data, i, j);
             }
         }
 
-        swap(list, i + 1, high);
+        // Move pivot to correct position
+        swap(data, i + 1, hi);
         return i + 1;
     }
 
-    // Swaps two elements in the list
-    private static void swap(List<DataItem> list, int i, int j) {
-        DataItem temp = list.get(i);
-        list.set(i, list.get(j));
-        list.set(j, temp);
+    /**
+     * Swaps two elements in the list
+     */
+    private static void swap(List<Data> data, int i, int j) {
+        Data temp = data.get(i);
+        data.set(i, data.get(j));
+        data.set(j, temp);
     }
 }
