@@ -4,7 +4,7 @@ import heapq
 from typing import List, Iterator
 from tempfile import TemporaryDirectory
 
-CHUNK_SIZE = 10_000_000  # Records per chunk
+CHUNK_SIZE = 5_000_000  # Records per chunk
 
 class DataEntry:
     def __init__(self, number: int, text: str):
