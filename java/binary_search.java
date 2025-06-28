@@ -4,6 +4,19 @@ import java.util.*;
 public class binary_search{
 
     public static void main(String[] args){
+        File baseDir;
+        try {
+            baseDir = new File(System.getProperty("user.dir"));
+        } catch (Exception e) {
+            System.out.println("Failed to locate base directory.");
+            return;
+        }
+
+        // Set input and output directories
+        File inputDir = new File(baseDir, "datasets");
+        File outputDir = new File(baseDir, "outputs");
+        outputDir.mkdirs();
+
         // Reads file name from user
         Scanner scanner = new Scanner(System.in);
 
@@ -12,10 +25,16 @@ public class binary_search{
 
         scanner.close();
 
+        File inputFile = new File(inputDir, filename);
+        if (!inputFile.exists()) {
+            System.out.println("File not found: " + inputFile.getAbsolutePath());
+            return;
+        }
+
         List<Integer> dataList = new ArrayList<>();
 
         // Reads input file
-        try (BufferedReader reader = new BufferedReader(new FileReader(filename))) {
+        try (BufferedReader reader = new BufferedReader(new FileReader(inputFile))) {
             String line;
 
             while ((line = reader.readLine()) != null)
@@ -79,7 +98,7 @@ public class binary_search{
         double worstCaseTime = (end - start) / 1_000_000.0;
 
         // Output file to binary_search_n.txt
-        String outputFile = "binary_search_" + n + ".txt";
+        File outputFile = new File(outputDir, "binary_search_" + n + ".txt");
         try (PrintWriter writer = new PrintWriter(outputFile))
         {
             writer.printf("Best case time: %.3f ms. %n", bestCaseTime);
@@ -89,7 +108,7 @@ public class binary_search{
             System.out.println("Error writing output file.");
         }
 
-        System.out.println("File saved to " + outputFile + ".");
+        System.out.println("File saved to: " + outputFile.getAbsolutePath());
     }
 
     // Binary search implementation

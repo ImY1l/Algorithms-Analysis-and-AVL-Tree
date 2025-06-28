@@ -22,10 +22,13 @@ def binary_search(array, target):
 
 def main():
     # Read file name from user
-    script_dir = os.path.dirname(os.path.abspath(__file__))
+    base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    input_dir = os.path.join(base_dir, "datasets")
+    output_dir = os.path.join(base_dir, "outputs")
+    os.makedirs(output_dir, exist_ok=True)
     
     filename = input("Enter file name: ")
-    input_filepath = os.path.join(script_dir, filename)
+    input_filepath = os.path.join(input_dir, filename)
 
     data_list = []
 
@@ -78,10 +81,11 @@ def main():
     worst_case_time = (end - start) / 1_000_000.0
 
     # Output file to binary_search_n.txt
-    output_file = "binary_search_" + str(n) + ".txt"
+    output_filename = f"binary_search_{n}.txt"
+    output_filepath = os.path.join(output_dir, output_filename)
 
     try:
-        with open(output_file, "w") as writer:
+        with open(output_filepath, "w") as writer:
             writer.write(f"Best case time: {best_case_time: .3f} ms. \n")
             writer.write(f"Average case time: {average_case_time: .3f} ms. \n")
             writer.write(f"Worst case time: {worst_case_time: .3f} ms. \n")
@@ -89,7 +93,7 @@ def main():
     except IOError:
         print("Error writing output file.")
 
-    print(f"File saved to {output_file}")
+    print(f"File saved to {output_filepath}")
 
 if __name__ == "__main__":
     main()
