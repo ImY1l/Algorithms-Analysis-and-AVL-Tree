@@ -1,6 +1,5 @@
 import os
 import sys
-import heapq
 import time
 
 # Configuration
@@ -75,29 +74,47 @@ def partition(arr, low, high):
     arr[i + 1], arr[high] = arr[high], arr[i + 1]
     return i + 1
 
-# Merge sorted chunks using a min-heap
+# Merge sorted chunks manually without using heapq
 def combine_chunks(sorted_files, final_output_path):
-    heap = []
-    open_files = []
+    open_files = [open(path, 'r') for path in sorted_files]
+    buffers = []
 
-    for path in sorted_files:
-        fh = open(path, 'r')
-        open_files.append(fh)
-        line = fh.readline()
+    for f in open_files:
+        line = f.readline()
         if line:
             parts = line.strip().split(',', 1)
             if len(parts) == 2:
-                heapq.heappush(heap, (int(parts[0]), parts[1], fh))
+                buffers.append((int(parts[0]), parts[1], f))
+            else:
+                buffers.append((float('inf'), '', f))
+        else:
+            buffers.append((float('inf'), '', f))
 
     with open(final_output_path, 'w', buffering=1_048_576) as out:
-        while heap:
-            num, txt, handle = heapq.heappop(heap)
+        while True:
+            min_index = -1
+            min_val = float('inf')
+
+            for i, (val, _, _) in enumerate(buffers):
+                if val < min_val:
+                    min_val = val
+                    min_index = i
+
+            if min_index == -1:
+                break  # All files exhausted
+
+            num, txt, f = buffers[min_index]
             out.write(f"{num},{txt}\n")
-            nxt = handle.readline()
+
+            nxt = f.readline()
             if nxt:
-                next_parts = nxt.strip().split(',', 1)
-                if len(next_parts) == 2:
-                    heapq.heappush(heap, (int(next_parts[0]), next_parts[1], handle))
+                parts = nxt.strip().split(',', 1)
+                if len(parts) == 2:
+                    buffers[min_index] = (int(parts[0]), parts[1], f)
+                else:
+                    buffers[min_index] = (float('inf'), '', f)
+            else:
+                buffers[min_index] = (float('inf'), '', f)
 
     for f in open_files:
         f.close()
