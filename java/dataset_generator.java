@@ -65,7 +65,7 @@ public class dataset_generator {
             int howMany = Integer.parseInt(args[0]);
 
             // We'll stash files in this datasets folder, might want to parameterize later
-            String path = "../datasets/dataset_sample_" + howMany + ".csv";
+            String path = "../datasets/dataset_" + howMany + ".csv";
             generateDataset(howMany, path);
         } catch (NumberFormatException nfEx) {
             System.err.println("Oops, that didn't look like a valid number.");
