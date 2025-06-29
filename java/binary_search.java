@@ -1,9 +1,9 @@
 import java.io.*;
 import java.util.*;
 
-public class binary_search{
+public class binary_search {
 
-    public static void main(String[] args){
+    public static void main(String[] args) {
         File baseDir;
         try {
             baseDir = new File(System.getProperty("user.dir")).getParentFile();
@@ -27,15 +27,10 @@ public class binary_search{
             return;
         }
 
-        int chunkSize = 5_000_000;
-        int totalCount = 0;
-        double totalBestTime = 0, totalAvgTime = 0, totalWorstTime = 0;
+        List<Integer> dataList = new ArrayList<>();
 
         try (BufferedReader reader = new BufferedReader(new FileReader(inputFile))) {
             String line;
-            List<Integer> chunk = new ArrayList<>();
-            Random random = new Random();
-
             while ((line = reader.readLine()) != null) {
                 line = line.trim();
                 if (line.isEmpty()) continue;
@@ -44,76 +39,22 @@ public class binary_search{
                 if (parts.length >= 1) {
                     try {
                         int tempNum = Integer.parseInt(parts[0].trim().replaceAll("\"", ""));
-                        chunk.add(tempNum);
-                        totalCount++;
+                        dataList.add(tempNum);
                     } catch (NumberFormatException e) {
                         System.err.println("Invalid number: " + parts[0]);
                     }
                 }
-
-                // Process chunk when full
-                if (chunk.size() == chunkSize) {
-                    double[] times = processChunk(chunk, random);
-                    totalBestTime += times[0];
-                    totalAvgTime += times[1];
-                    totalWorstTime += times[2];
-                    chunk.clear();
-                }
             }
-
-            // Process remaining data
-            if (!chunk.isEmpty()) {
-                double[] times = processChunk(chunk, random);
-                totalBestTime += times[0];
-                totalAvgTime += times[1];
-                totalWorstTime += times[2];
-            }
-
         } catch (IOException e) {
             System.out.println("Error reading file.");
             return;
         }
 
-        // Write output
-        File outputFile = new File(outputDir, "binary_search_" + totalCount + ".txt");
-        try (PrintWriter writer = new PrintWriter(outputFile)) {
-            writer.printf("Best case total time: %.3f ms%n", totalBestTime);
-            writer.printf("Average case total time: %.3f ms%n", totalAvgTime);
-            writer.printf("Worst case total time: %.3f ms%n", totalWorstTime);
-        } catch (IOException e) {
-            System.out.println("Error writing output file.");
-        }
-
-        System.out.println("Processed " + totalCount + " entries in chunks.");
-        System.out.println("File saved to: " + outputFile.getAbsolutePath());
-    }
-
-    // Binary search implementation
-    public static int binarySearch(int[] array, int target)
-    {
-        int left = 0, right = array.length -1;
-        while (left <= right)
-        {
-            int mid = (left + right) / 2;
-            if (array[mid] == target) 
-                return mid;
-            else if (array[mid] < target) 
-                left = mid + 1;
-            else 
-                right = mid - 1;
-        }
-
-        return -1;
-    }
-
-    public static double[] processChunk(List<Integer> chunkList, Random random) {
-        int n = chunkList.size();
+        int n = dataList.size();
         int[] data = new int[n];
         for (int i = 0; i < n; i++) {
-            data[i] = chunkList.get(i);
+            data[i] = dataList.get(i);
         }
-
-        double bestTime = 0, avgTime = 0, worstTime = 0;
 
         // Best case (middle element)
         int bestCase = data[n / 2];
@@ -122,16 +63,17 @@ public class binary_search{
             binarySearch(data, bestCase);
         }
         long end = System.nanoTime();
-        bestTime = (end - start) / 1_000_000.0;
+        double bestTime = (end - start) / 1_000_000.0;
 
-        // Average case (random targets)
+        // Average case (random elements)
+        Random random = new Random();
         start = System.nanoTime();
         for (int i = 0; i < n; i++) {
             int randIndex = random.nextInt(n);
             binarySearch(data, data[randIndex]);
         }
         end = System.nanoTime();
-        avgTime = (end - start) / 1_000_000.0;
+        double avgTime = (end - start) / 1_000_000.0;
 
         // Worst case (value not in list)
         int worstCase = data[n - 1] + 1;
@@ -140,9 +82,32 @@ public class binary_search{
             binarySearch(data, worstCase);
         }
         end = System.nanoTime();
-        worstTime = (end - start) / 1_000_000.0;
+        double worstTime = (end - start) / 1_000_000.0;
 
-        return new double[]{bestTime, avgTime, worstTime};
+        File outputFile = new File(outputDir, "binary_search_" + n + ".txt");
+        try (PrintWriter writer = new PrintWriter(outputFile)) {
+            writer.printf("Best case time: %.3f ms%n", bestTime);
+            writer.printf("Average case time: %.3f ms%n", avgTime);
+            writer.printf("Worst case time: %.3f ms%n", worstTime);
+        } catch (IOException e) {
+            System.out.println("Error writing output file.");
+        }
+
+        System.out.println("Processed " + n + " entries in full dataset.");
+        System.out.println("File saved to: " + outputFile.getAbsolutePath());
     }
 
+    public static int binarySearch(int[] array, int target) {
+        int left = 0, right = array.length - 1;
+        while (left <= right) {
+            int mid = (left + right) / 2;
+            if (array[mid] == target)
+                return mid;
+            else if (array[mid] < target)
+                left = mid + 1;
+            else
+                right = mid - 1;
+        }
+        return -1;
+    }
 }
