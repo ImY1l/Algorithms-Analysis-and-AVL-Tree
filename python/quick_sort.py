@@ -24,7 +24,7 @@ def split_and_sort(input_file_path):
     records = []
     index = 0
 
-    with open(input_file_path, 'r') as src:
+    with open(input_file_path, 'r', buffering=1_048_576) as src:
         for ln_num, ln in enumerate(src, 1):
             parts = ln.strip().split(',', 1)
             if len(parts) == 2:
@@ -77,7 +77,7 @@ def partition(arr, low, high):
 
 # Merge sorted chunks manually without using heapq
 def combine_chunks(sorted_files, final_output_path):
-    open_files = [open(path, 'r') for path in sorted_files]
+    open_files = [open(path, 'r', buffering=1_048_576) for path in sorted_files]
     buffers = []
 
     for f in open_files:
