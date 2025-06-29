@@ -42,7 +42,7 @@ public class merge_sort {
             
             // Print execution time
             long endTime = System.currentTimeMillis();
-            System.out.println("Execution time (ms): " + (endTime - startTime) + " ms");
+            System.out.println("Execution time (ms): " + (endTime - startTime));
             
         } catch (IOException e) {
             System.err.println("Error processing file: " + e.getMessage());
