@@ -1,10 +1,8 @@
 import os
 import sys
-import heapq
 import csv
 import shutil
 import time
-from concurrent.futures import ThreadPoolExecutor
 
 CHUNK_SIZE = 5_000_000
 TEMP_DIR = "../temp"
@@ -21,11 +19,42 @@ class DataEntry:
     def __str__(self):
         return f"{self.number},{self.text}"
 
+# Iterative merge sort for a list of DataEntry
+def merge_sort_iterative(data):
+    if not data:
+        return []
+
+    width = 1
+    n = len(data)
+    result = data[:]
+    
+    while width < n:
+        for i in range(0, n, 2 * width):
+            left = result[i:i + width]
+            right = result[i + width:i + 2 * width]
+            result[i:i + 2 * width] = merge(left, right)
+        width *= 2
+    return result
+
+def merge(left, right):
+    merged = []
+    i = j = 0
+    while i < len(left) and j < len(right):
+        if left[i].number <= right[j].number:
+            merged.append(left[i])
+            i += 1
+        else:
+            merged.append(right[j])
+            j += 1
+    merged.extend(left[i:])
+    merged.extend(right[j:])
+    return merged
+
 def main(input_file):
     if not input_file:
         print("Usage: python merge_sort.py <input_file>")
         return
-    
+
     start_time = time.time()
     try:
         sorted_chunks = process_in_chunks(input_file)
@@ -35,8 +64,10 @@ def main(input_file):
 
         for chunk_file in sorted_chunks:
             os.remove(chunk_file)
+        shutil.rmtree(TEMP_DIR)
+
         elapsed = time.time() - start_time
-        print(f"Processing completed in {int(elapsed * 1000)} ms")
+        print(int(elapsed * 1000))
 
     except Exception as e:
         print(f"Error during sorting: {e}")
@@ -44,12 +75,9 @@ def main(input_file):
 
 def process_in_chunks(input_file):
     os.makedirs(TEMP_DIR, exist_ok=True)
-    futures = []
     chunk_files = []
     chunk_counter = 0
     current_chunk = []
-
-    executor = ThreadPoolExecutor()
 
     with open(f"../datasets/{input_file}", newline='', encoding="utf-8") as csvfile:
         reader = csv.reader(csvfile)
@@ -61,65 +89,58 @@ def process_in_chunks(input_file):
             current_chunk.append(DataEntry(number, text))
 
             if len(current_chunk) >= CHUNK_SIZE:
-                chunk_copy = current_chunk[:]
+                chunk_file = sort_and_save_chunk(current_chunk, chunk_counter)
+                chunk_files.append(chunk_file)
                 current_chunk.clear()
-                future = executor.submit(sort_and_save_chunk, chunk_copy, chunk_counter)
-                futures.append(future)
                 chunk_counter += 1
 
-        # Submit remaining chunk
         if current_chunk:
-            future = executor.submit(sort_and_save_chunk, current_chunk, chunk_counter)
-            futures.append(future)
-
-    for future in futures:
-        chunk_files.append(future.result())
+            chunk_file = sort_and_save_chunk(current_chunk, chunk_counter)
+            chunk_files.append(chunk_file)
 
     return chunk_files
 
 def sort_and_save_chunk(chunk, chunk_number):
-    chunk.sort()
+    sorted_chunk = merge_sort_iterative(chunk)
     file_path = os.path.join(TEMP_DIR, f"chunk_{chunk_number}.csv")
     with open(file_path, "w", newline='', encoding="utf-8") as file:
         writer = csv.writer(file)
-        for entry in chunk:
+        for entry in sorted_chunk:
             writer.writerow([entry.number, entry.text])
     return file_path
 
 def merge_sorted_chunks(chunk_files, output_file):
     os.makedirs(os.path.dirname(output_file), exist_ok=True)
-    min_heap = []
-    file_readers = []
+    readers = []
+    entries = []
 
-    try:
-        for file_path in chunk_files:
-            f = open(file_path, newline='', encoding="utf-8")
-            reader = csv.reader(f)
-            file_readers.append((f, reader))
+    for path in chunk_files:
+        f = open(path, newline='', encoding="utf-8")
+        reader = csv.reader(f)
+        try:
+            row = next(reader)
+            if row:
+                number = int(row[0])
+                entries.append((number, row[1], reader, f))
+        except StopIteration:
+            f.close()
+
+    with open(output_file, "w", newline='', encoding="utf-8") as out_file:
+        writer = csv.writer(out_file)
+        while entries:
+            min_index = min(range(len(entries)), key=lambda i: entries[i][0])
+            num, txt, reader, f = entries[min_index]
+            writer.writerow([num, txt])
             try:
                 row = next(reader)
                 if row:
                     number = int(row[0])
-                    heapq.heappush(min_heap, (DataEntry(number, row[1]), reader))
+                    entries[min_index] = (number, row[1], reader, f)
+                else:
+                    raise StopIteration
             except StopIteration:
-                pass
-
-        with open(output_file, "w", newline='', encoding="utf-8") as out_file:
-            writer = csv.writer(out_file)
-
-            while min_heap:
-                smallest, reader = heapq.heappop(min_heap)
-                writer.writerow([smallest.number, smallest.text])
-                try:
-                    row = next(reader)
-                    if row:
-                        number = int(row[0])
-                        heapq.heappush(min_heap, (DataEntry(number, row[1]), reader))
-                except StopIteration:
-                    continue
-    finally:
-        for f, _ in file_readers:
-            f.close()
+                f.close()
+                entries.pop(min_index)
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
