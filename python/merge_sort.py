@@ -67,7 +67,7 @@ def main(input_file):
         shutil.rmtree(TEMP_DIR)
 
         elapsed = time.time() - start_time
-        print(int(elapsed * 1000))
+        print("Execution time (ms):", int(elapsed * 1000))
 
     except Exception as e:
         print(f"Error during sorting: {e}")
