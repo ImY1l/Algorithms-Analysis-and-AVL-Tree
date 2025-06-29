@@ -54,7 +54,7 @@ def process_chunk(data_chunk):
 def main():
     # Paths
     base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-    input_dir = os.path.join(base_dir, "datasets")
+    input_dir = os.path.join(base_dir, "outputs")
     output_dir = os.path.join(base_dir, "outputs")
     os.makedirs(output_dir, exist_ok=True)
 

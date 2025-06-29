@@ -12,7 +12,7 @@ public class binary_search{
             return;
         }
 
-        File inputDir = new File(baseDir, "datasets");
+        File inputDir = new File(baseDir, "outputs");
         File outputDir = new File(baseDir, "outputs");
         outputDir.mkdirs();
 
