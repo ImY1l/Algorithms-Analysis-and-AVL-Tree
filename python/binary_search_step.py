@@ -1,5 +1,6 @@
 import csv
 import sys
+import os # Import the os module
 
 def binary_search_step(data,x):
     arr = []
@@ -35,15 +36,15 @@ def read_csv(filename):
     return data
 
 if __name__ == "__main__":
-    filename = "dataset_sample_1000.csv"
-    target= 613479842  # change target value here
+    filename = os.path.join("datasets", "dataset_1000.csv") #change dataset here
+    target= 613479842   # change target value here
 
     data = read_csv(filename)
-    data.sort(key=lambda x: x[0])  # ensure the data is sorted by number
-
+    data.sort(key=lambda x: x[0])   # ensure the data is sorted by number
     steps = binary_search_step(data, target)
-    
-output_filename = f"binary_search_step_{target}.txt"
-with open(output_filename, "w") as f:
-    for step in steps:
-        f.write(step + "\n")
+    output_directory = "outputs"
+    os.makedirs(output_directory, exist_ok=True)
+    output_filename = os.path.join(output_directory, f"binary_search_step_{target}.txt")
+    with open(output_filename, "w") as f: 
+        for step in steps:
+            f.write(step + "\n")
