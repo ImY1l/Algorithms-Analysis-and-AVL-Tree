@@ -33,6 +33,9 @@ def merge(left, right, output_file):
     merged.extend(left[left_index:])
     merged.extend(right[right_index:])
 
+    with open(output_file, 'a') as f:
+        f.write(f"Result: {[f'{x[0]}, {x[1]}' for x in merged]}\n")
+
     return merged
 
 def main():
@@ -90,7 +93,7 @@ def main():
         output_file = os.path.join(output_dir, output_filename)
 
         with open(output_file, 'a') as f:
-            f.write(f"Merge Sort Steps for rows {start_row}-{end_row}\n")
+            f.write(f"Merge Sort Steps for rows {start_row}-{end_row}\n\n")
 
         sorted_data = merge_sort_step(data_list, output_file)
 
