@@ -37,9 +37,15 @@ def merge(left, right, output_file):
 
 def main():
     # Read file name from user
+    base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    input_dir = os.path.join(base_dir, "datasets")
+    output_dir = os.path.join(base_dir, "outputs")
+    os.makedirs(output_dir, exist_ok=True)
+
     filename = input("Enter file name: ")
+    input_file = os.path.join(input_dir, filename)
     
-    if not os.path.exists(filename):
+    if not os.path.exists(input_file):
         print(f"File not found.")
         return
 
@@ -49,7 +55,7 @@ def main():
 
         data_list = []
 
-        with open(filename, 'r', newline='') as file:
+        with open(input_file, 'r', newline='') as file:
             for current_line_number, line in enumerate(file, 1):
                 if current_line_number < start_row:
                     continue
@@ -80,7 +86,8 @@ def main():
             print(f"No valid data found in rows {start_row}-{end_row} from '{filename}'. Please check the input file and row range.", file=sys.stderr)
             return
 
-        output_file = f"merge_sort_step_{start_row}_{end_row}.txt"
+        output_filename = f"merge_sort_step_{start_row}_{end_row}.txt"
+        output_file = os.path.join(output_dir, output_filename)
 
         with open(output_file, 'a') as f:
             f.write(f"Merge Sort Steps for rows {start_row}-{end_row}\n")
