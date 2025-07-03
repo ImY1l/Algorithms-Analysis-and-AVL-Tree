@@ -77,7 +77,7 @@ This project implements and analyzes sorting and searching algorithms as part of
    javac binary_search.java
    java binary_search
    ```
-> The binary search will ask you to insert the sorted file name.
+> The binary search will ask you to insert the sorted file name.  
 > Every algorithm can be run to sort a dataset or to generate steps text file (_step).
 > | Symbol | Description |
 > |---|---|
