@@ -36,5 +36,42 @@ This project implements and analyzes sorting and searching algorithms as part of
 - At least 10 different input sizes must be tested for performance analysis.
 
 ## 🚀 Run Locally
+1. Clone the repository
+  ```bash
+  git clone https://github.com/ImY1l/Algorithms-Analysis-and-AVL-Tree.git
+  cd Algorithms-Analysis-and-AVL-Tree
+  ```
+2. Generate datasets
+  ```bash
+  cd java
+  javac dataset_generator.java
+  java dataset_generator y
+  ```
+4. Run the program
+  - Java:
+    ```bash
+    cd java
+    javac x.java
+    Java x dataset_y.csv
+    ```
+  - Python
+    ```bash
+    cd python
+    python x.py dataset_y.csv
+    ```
+5. Binary search
+   ```bash
+   cd python
+   python binary_search.py
+   # or
+   cd java
+   javac binary_search.java
+   java binary_search
+   ```
+> The binary search will ask you to insert the sorted file name.
+> Every algorithm can be run to sort a dataset or to generate steps text file (_step).
+> | X | Replace x with the actual class name (e.g. merge_sort, quick_sort).   |
+> | Y | Replace y with the actual number of the dataset you like to generate/sort. |
+
 
 [![](https://visitcount.itsvg.in/api?id=imy1l&icon=0&color=0)](https://visitcount.itsvg.in)
