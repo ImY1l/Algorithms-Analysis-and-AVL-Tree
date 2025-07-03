@@ -82,6 +82,6 @@ This project implements and analyzes sorting and searching algorithms as part of
 > | Symbol | Description |
 > |---|---|
 > | X | Replace x with the actual class name (e.g. merge_sort, quick_sort).   |
-> | Y | Replace y with the actual number of the dataset you like to generate/sort. |
+> | Y | Replace y with the actual number of the dataset you want to generate/sort. |
 
 [![](https://visitcount.itsvg.in/api?id=imy1l&icon=0&color=0)](https://visitcount.itsvg.in)
