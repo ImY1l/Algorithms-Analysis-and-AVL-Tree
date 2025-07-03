@@ -79,6 +79,7 @@ This project implements and analyzes sorting and searching algorithms as part of
    ```
 > The binary search will ask you to insert the sorted file name.
 > Every algorithm can be run to sort a dataset or to generate steps text file (_step).
+|---|---|
 | X | Replace x with the actual class name (e.g. merge_sort, quick_sort).   |
 | Y | Replace y with the actual number of the dataset you like to generate/sort. |
 
